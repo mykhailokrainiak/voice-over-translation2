@@ -685,7 +685,7 @@ async function maybeBuildCrx({
   if (!(await exists(crx3Bin))) {
     throw new Error(`CRX builder not found: ${crx3Bin}. Install dependencies first.`);
   }
-  const outCrx = path.join(outBase, `vot-extension-chrome-${version}.zip`);
+  const outCrx = path.join(outBase, `vot-extension-chrome-${version}.crx`);
   try {
     await runCmd(
       crx3Bin,
@@ -997,6 +997,18 @@ export async function finalizeExtensionBuildArtifacts(
       includeWorld,
       buildManifest: buildManifestChrome,
     });
+
+    const removedCrxPackages = await cleanupOlderVersionedArtifacts({
+      artifactPrefix: "vot-extension-chrome",
+      fileExtension: ".crx",
+      currentVersion: version,
+    });
+    const { crxPath } = await maybeBuildCrx({
+      sourceDir: chromeBuild.outDir,
+      version,
+    });
+    chromeBuild.packagePath = crxPath;
+    chromeBuild.removedPackages.push(...removedCrxPackages);
   }
 
   if (shouldBuildFirefox) {
